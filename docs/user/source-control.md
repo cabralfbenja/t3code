@@ -426,6 +426,9 @@ each can be loaded further on its own. Agents file new issues in the first team 
 connect another Linear workspace or user, add another account in the same place; each project
 reads its teams through the account you picked them under.
 
+For an internal tracker, connect **Custom** with a name, base URL and token, then
+pick its projects in the same place. See the [custom tracker REST contract](custom-issue-trackers.md).
+
 Select an issue to open it beside the list: description, comments, state changes, linked pull
 requests, labels, assignees, and reactions. Linked pull requests open in the same panel. You can
 comment, edit the title and description, change labels and assignees, react, and move it to

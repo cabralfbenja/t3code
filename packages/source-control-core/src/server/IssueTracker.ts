@@ -106,6 +106,8 @@ export type IssueInvolvementFilter =
 export interface IssueTrackerApi {
   readonly kind: IssueTrackerKind;
   readonly capabilities: IssueCapabilities;
+  /** Host of a user-configured instance; read using the selected account. */
+  readonly getHost?: Effect.Effect<string, IssueTrackerError>;
 
   /** The signed-in account, which is what involvement filtering compares against. */
   readonly getViewer: (input: {

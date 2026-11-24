@@ -53,6 +53,7 @@ export function asIssueTrackerAccount(
   const wrapped: { readonly [K in keyof IssueTrackerApi]-?: IssueTrackerApi[K] | undefined } = {
     kind: api.kind,
     capabilities: api.capabilities,
+    getHost: api.getHost && as(api.getHost),
     getViewer: (input) => as(api.getViewer(input)),
     listIssues: (input) => as(api.listIssues(input)),
     getIssue: (input) => as(api.getIssue(input)),

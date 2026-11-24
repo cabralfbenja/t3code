@@ -10,7 +10,7 @@ import {
 } from "@t3tools/client-runtime/state/issue-trackers";
 import { squashAtomCommandFailure } from "@t3tools/client-runtime/state/runtime";
 import { T, useGT, useMessages } from "gt-react";
-import { ChevronDownIcon, ExternalLinkIcon, PlusIcon, XIcon } from "lucide-react";
+import { ChevronDownIcon, ExternalLinkIcon, PlusIcon, TicketIcon, XIcon } from "lucide-react";
 import { useState, type ElementType } from "react";
 import type {
   EnvironmentId,
@@ -32,7 +32,7 @@ import { Button, InlineButton } from "../ui/button";
 import { Collapsible, CollapsibleContent } from "../ui/collapsible";
 import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "../ui/select";
 import { Skeleton } from "../ui/skeleton";
-import { SecretInput } from "./SecretInput";
+import { TrackerCredentialForm } from "./TrackerCredentialForm";
 import { SettingsRow, SettingsSection } from "./settingsLayout";
 import { useSearchableSetting } from "./settingsSearch";
 
@@ -41,6 +41,7 @@ type TrackerIcon = ElementType<{ className?: string }>;
 /** Web art per tracker kind; the server supplies everything else about a tracker. */
 const TRACKER_ICONS: Partial<Record<string, TrackerIcon>> = {
   linear: LinearIcon,
+  custom: TicketIcon,
 };
 
 /**
@@ -201,8 +202,16 @@ function TrackerRow({
           {/* Locked while saving, so an edit made mid-request is not overwritten by the saved value. */}
           <fieldset disabled={!canEdit || busy} className="contents">
             <div className="px-3 pb-4 pt-1 sm:px-4">
-              <SettingsRow
-                title={<label htmlFor={inputId}>{tracker.credential.label}</label>}
+              <TrackerCredentialForm
+                credential={tracker.credential}
+                id={inputId}
+                size="sm"
+                className="min-w-0 flex-1"
+                configured={tracker.connected}
+                value=""
+                onCommit={(next) => {
+                  if (next.trim()) void submit(next.trim());
+                }}
                 description={
                   <>
                     <T>Stored on the server.</T>
@@ -226,30 +235,18 @@ function TrackerRow({
                     {failure ? <span className="block text-destructive">{failure}</span> : null}
                   </>
                 }
-                control={
-                  <div className="flex w-full min-w-0 items-center gap-2 @min-[32rem]/settings-row:w-56">
-                    <SecretInput
-                      id={inputId}
-                      size="sm"
-                      className="min-w-0 flex-1"
-                      configured={tracker.connected}
-                      value=""
-                      onCommit={(next) => {
-                        if (next.trim()) void submit(next.trim());
-                      }}
-                    />
-                    {tracker.connected ? (
-                      <Button
-                        type="button"
-                        size="icon-sm"
-                        variant="ghost-destructive"
-                        onClick={() => void submit(null)}
-                        aria-label={gt("Disconnect {tracker}", { tracker: tracker.displayName })}
-                      >
-                        <XIcon className="size-3.5" />
-                      </Button>
-                    ) : null}
-                  </div>
+                action={
+                  tracker.connected ? (
+                    <Button
+                      type="button"
+                      size="icon-sm"
+                      variant="ghost-destructive"
+                      onClick={() => void submit(null)}
+                      aria-label={gt("Disconnect {tracker}", { tracker: tracker.displayName })}
+                    >
+                      <XIcon className="size-3.5" />
+                    </Button>
+                  ) : null
                 }
               />
               {usable ? (
@@ -413,20 +410,16 @@ function AddAccountRow({
     );
   }
   return (
-    <SettingsRow
-      title={<label htmlFor={inputId}>{tracker.credential.label}</label>}
+    <TrackerCredentialForm
+      credential={tracker.credential}
+      id={inputId}
+      size="sm"
+      className="min-w-0 flex-1"
+      value=""
+      onCommit={(next) => {
+        if (next.trim()) void onAdd(next.trim()).then((added) => added && setAdding(false));
+      }}
       description={gt("For the new {tracker} account.", { tracker: tracker.displayName })}
-      control={
-        <SecretInput
-          id={inputId}
-          size="sm"
-          className="w-full min-w-0 @min-[32rem]/settings-row:w-56"
-          value=""
-          onCommit={(next) => {
-            if (next.trim()) void onAdd(next.trim()).then((added) => added && setAdding(false));
-          }}
-        />
-      }
     />
   );
 }
