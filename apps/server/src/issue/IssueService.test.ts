@@ -593,9 +593,13 @@ describe("IssueService with a standalone tracker", () => {
       const docs = project({ id: "docs", repository: "acme/docs" });
       let reads = 0;
       let scope = "ENG";
+      let instanceHost = "first.test";
       const service = yield* makeService({
         projects: [web, docs],
-        trackers: [fakeTracker(), fakeStandaloneTracker()],
+        trackers: [
+          fakeTracker(),
+          fakeStandaloneTracker({ getHost: Effect.sync(() => instanceHost) }),
+        ],
         readBindings: Effect.sync(() => {
           reads += 1;
           return new Map([[web.id, { tracker: LINEAR, scope }]]);
@@ -605,11 +609,14 @@ describe("IssueService with a standalone tracker", () => {
       const first = yield* service.list({ state: "open" });
       expect(first.scopes?.map((entry) => entry.scope)).toEqual(["ENG", "acme/web", "acme/docs"]);
       expect(reads).toBe(1);
+      expect(first.scopes?.[0]?.host).toBe("first.test");
 
       scope = "OPS";
+      instanceHost = "second.test";
       const next = yield* service.list({ state: "open", refresh: true });
       expect(next.scopes?.map((entry) => entry.scope)).toEqual(["OPS", "acme/web", "acme/docs"]);
       expect(reads).toBe(2);
+      expect(next.scopes?.[0]?.host).toBe("second.test");
 
       const missing = yield* service.list({ state: "open", projectId: "missing" as ProjectId });
       expect(missing.scopes).toEqual([]);

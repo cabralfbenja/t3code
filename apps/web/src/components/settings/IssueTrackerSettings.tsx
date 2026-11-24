@@ -32,7 +32,7 @@ import { Button, InlineButton } from "../ui/button";
 import { Collapsible, CollapsibleContent } from "../ui/collapsible";
 import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "../ui/select";
 import { Skeleton } from "../ui/skeleton";
-import { SecretInput } from "./SecretInput";
+import { TrackerCredentialInput } from "./TrackerCredentialInput";
 import { SettingsRow, SettingsSection } from "./settingsLayout";
 import { useSearchableSetting } from "./settingsSearch";
 
@@ -228,7 +228,8 @@ function TrackerRow({
                 }
                 control={
                   <div className="flex w-full min-w-0 items-center gap-2 @min-[32rem]/settings-row:w-56">
-                    <SecretInput
+                    <TrackerCredentialInput
+                      credential={tracker.credential}
                       id={inputId}
                       size="sm"
                       className="min-w-0 flex-1"
@@ -417,7 +418,8 @@ function AddAccountRow({
       title={<label htmlFor={inputId}>{tracker.credential.label}</label>}
       description={gt("For the new {tracker} account.", { tracker: tracker.displayName })}
       control={
-        <SecretInput
+        <TrackerCredentialInput
+          credential={tracker.credential}
           id={inputId}
           size="sm"
           className="w-full min-w-0 @min-[32rem]/settings-row:w-56"

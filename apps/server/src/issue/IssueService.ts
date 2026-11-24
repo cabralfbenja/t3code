@@ -209,21 +209,32 @@ const make = Effect.gen(function* () {
   const repositoryIdentities = yield* RepositoryIdentityResolver.RepositoryIdentityResolver;
   const bindings = yield* IssueTrackerBindings.IssueTrackerBindingsRepository;
 
-  const resolveStandaloneBindings = (
+  const resolveStandaloneBindings = Effect.fn("IssueService.resolveStandaloneBindings")(function* (
     binding: IssueTrackerProjectBinding | undefined,
-  ): ReadonlyArray<ProjectTrackerBinding> => {
+  ) {
     if (binding === undefined) return [];
     const api = registry.get(binding.tracker);
     if (api === null || !isStandaloneIssueTracker(api)) return [];
-    const host = api.standalone.host;
     const accountId = binding.accountId ?? null;
-    return issueTrackerBindingScopes(binding).map((scope) => ({
+    const host = yield* (
+      asIssueTrackerAccount(api, accountId).getHost ?? Effect.succeed(api.standalone.host)
+    ).pipe(
+      Effect.mapError(
+        (cause) =>
+          new IssueOperationError({
+            operation: "listProjects",
+            detail: "The tracker's host could not be read.",
+            cause,
+          }),
+      ),
+    );
+    return issueTrackerBindingScopes(binding).map((scope): ProjectTrackerBinding => ({
       tracker: binding.tracker,
       host,
       scope,
       accountId,
     }));
-  };
+  });
 
   /**
    * Where a project's issues live: its bound standalone tracker, its git host's, or both. The
@@ -237,10 +248,14 @@ const make = Effect.gen(function* () {
       ? Effect.succeed(project.repositoryIdentity)
       : repositoryIdentities.resolve(project.workspaceRoot)
     ).pipe(
-      Effect.map((repositoryIdentity) => {
-        const gitHost = resolveGitHostBindings({ ...project, repositoryIdentity });
-        return [...resolveStandaloneBindings(binding), ...gitHost];
-      }),
+      Effect.flatMap((repositoryIdentity) =>
+        resolveStandaloneBindings(binding).pipe(
+          Effect.map((standalone) => [
+            ...standalone,
+            ...resolveGitHostBindings({ ...project, repositoryIdentity }),
+          ]),
+        ),
+      ),
     );
 
   const listProjects = (filter: {

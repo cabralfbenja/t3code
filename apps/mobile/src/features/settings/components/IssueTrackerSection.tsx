@@ -151,16 +151,21 @@ export function IssueTrackerCredentialForm(props: {
   const { environmentId, tracker } = props;
   const connect = useAtomCommand(issueTrackerEnvironment.connect, { reportFailure: false });
   const [draft, setDraft] = useState("");
+  const [fields, setFields] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
   const submit = async (token: string | null) => {
+    if (token !== null && tracker.credential.fields?.some((field) => !fields[field.key]?.trim()))
+      return;
     setBusy(true);
     setFailure(null);
+    const credential =
+      token === null || !tracker.credential.fields ? token : JSON.stringify({ ...fields, token });
     const result = await connect({
       environmentId,
       input: props.addAccount
-        ? { tracker: tracker.tracker, token, addAccount: true }
-        : { tracker: tracker.tracker, accountId: tracker.accountId, token },
+        ? { tracker: tracker.tracker, token: credential, addAccount: true }
+        : { tracker: tracker.tracker, accountId: tracker.accountId, token: credential },
     });
     setBusy(false);
     if (!AsyncResult.isFailure(result)) {
@@ -175,6 +180,18 @@ export function IssueTrackerCredentialForm(props: {
   const replacing = tracker.connected && !props.addAccount;
   return (
     <View className="gap-3 p-4">
+      {tracker.credential.fields?.map((field) => (
+        <SecretTextInput
+          key={field.key}
+          secret={false}
+          accessibilityLabel={field.label}
+          onSubmitEditing={() => {}}
+          placeholder={field.label}
+          value={fields[field.key] ?? ""}
+          onChangeText={(value) => setFields({ ...fields, [field.key]: value })}
+          editable={!locked}
+        />
+      ))}
       <SecretTextInput
         accessibilityLabel={tracker.credential.label}
         placeholder={
@@ -219,7 +236,11 @@ export function IssueTrackerCredentialForm(props: {
           tone="primary"
           size="compact"
           loading={busy}
-          disabled={locked || !draft.trim()}
+          disabled={
+            locked ||
+            !draft.trim() ||
+            tracker.credential.fields?.some((field) => !fields[field.key]?.trim())
+          }
           onPress={() => void submit(draft.trim())}
         />
       </View>
