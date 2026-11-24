@@ -1,12 +1,13 @@
 import { expect, it, vi } from "vite-plus/test";
 import { userEvent } from "vite-plus/test/browser";
 import { render } from "../../../test/render";
-import { TrackerCredentialInput } from "./TrackerCredentialInput";
+import { TrackerCredentialForm } from "./TrackerCredentialForm";
 
 it("requires the instance fields and submits them with the secret on Enter", async () => {
   const commit = vi.fn();
   await using screen = await render(
-    <TrackerCredentialInput
+    <TrackerCredentialForm
+      id="credential"
       credential={{
         label: "API token",
         helpUrl: null,
@@ -40,7 +41,8 @@ it("requires the instance fields and submits them with the secret on Enter", asy
 it("keeps unstructured credentials as the original bare token", async () => {
   const commit = vi.fn();
   await using screen = await render(
-    <TrackerCredentialInput
+    <TrackerCredentialForm
+      id="credential"
       credential={{ label: "API token", helpUrl: null }}
       value=""
       aria-label="API token"
